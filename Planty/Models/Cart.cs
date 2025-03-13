@@ -5,7 +5,7 @@ public class Cart
 {
 	public int CartID { get; set; }
 	public int NumberOfItems { get; set; }
-	//[ForeignKey("User")]
+	///[ForeignKey("User")]
 	public int UserID { get; set; }
 	//public User User { get; set; }
 	public ICollection<CartItem> CartItems { get; set; }

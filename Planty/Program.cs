@@ -1,3 +1,7 @@
+using Blog_Platform.IRepository;
+using Blog_Platform;
+using Blog_Platform.Models;
+using Blog_Platform.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +24,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddIdentity<AppUser, IdentityRole>(option =>
+{
+    option.Password.RequiredLength = 8;
+    option.Password.RequireNonAlphanumeric = false;
+    option.Password.RequireUppercase = false;
+    option.Password.RequireLowercase = false;
+    option.Password.RequireDigit = false;
+}).AddEntityFrameworkStores<ApplicationDbContext>();
 
 
 builder.Services.AddAuthentication(options => {
@@ -36,17 +47,25 @@ builder.Services.AddAuthentication(options => {
     options.TokenValidationParameters = new TokenValidationParameters()
     {
         ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["JWT:IssuerIP"],
+        ValidIssuer = builder.Configuration["JWT:issuer"],
         ValidateAudience = true,
-        ValidAudience = builder.Configuration["JWT:AudienceIP"],
+        ValidAudience = builder.Configuration["JWT:audience"],
         IssuerSigningKey =
             new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecritKey"]))
+                Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
 
     };
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddScoped<IBlogPostRepo, BlogPostRepo>();
+builder.Services.AddScoped<IBlogPostHasTagRepo, BlogPostHasTagRepo>();
+builder.Services.AddScoped<ITagRepo, TagRepo>();
+builder.Services.AddScoped<ICommentRepo, CommentRepo>();
+builder.Services.AddTransient<ITokenRepo, TokenRepo>();
+builder.Services.AddTransient<RevokeMiddleWare>();
+
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(swagger =>
 {
@@ -93,6 +112,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

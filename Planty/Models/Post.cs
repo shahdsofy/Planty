@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Blog_Platform.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Planty.Models
 {

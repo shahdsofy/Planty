@@ -1,4 +1,4 @@
-﻿namespace Planty.Enums
+﻿namespace Planty.Models.Enums
 {
 	public enum OrderStatus
 	{

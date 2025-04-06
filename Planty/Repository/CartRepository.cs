@@ -13,6 +13,7 @@ public class CartRepository : ICartRepository
 	{
 		_context = context;
 	}
+
 	public async Task<object> GetCartItemsByUserIdAsync(string userId)
 	{
 		int userIdInt = int.Parse(userId);
@@ -103,7 +104,8 @@ public class CartRepository : ICartRepository
 			OrderDate = DateTime.Now,
 			ShippingAddress = checkoutData?.ShippingAddress,
 			Notes = checkoutData?.Notes,
-			OrderItems = new List<OrderItem>()
+			OrderItems = new List<OrderItem>(),
+			PaymentMethod = checkoutData.PaymentMethod
 		};
 
 		foreach (var item in cart.CartItems)

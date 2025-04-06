@@ -1,7 +1,7 @@
 ﻿
 using System.ComponentModel.DataAnnotations.Schema;
-using Planty.Enums;
 using Planty.Models;
+using Planty.Models.Enums;
 
 public class Order
 {
@@ -18,6 +18,7 @@ public class Order
 	public string? ShippingAddress { get; set; }
 	public string? Notes { get; set; }
 	public OrderStatus Status { get; set; } = OrderStatus.Pending;
+	public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CashOnDelivery;
 
 	// Navigation Properties
 	public ICollection<OrderItem> OrderItems { get; set; }

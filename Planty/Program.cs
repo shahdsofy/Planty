@@ -17,12 +17,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
 	options.UseSqlServer(builder.Configuration.GetConnectionString("pp"));
 });
-
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(option =>
 {
@@ -33,15 +31,13 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(option =>
 	option.Password.RequireDigit = false;
 }).AddEntityFrameworkStores<ApplicationDbContext>();
 
-
 builder.Services.AddAuthentication(options =>
 {
-	//Check JWT Token Header
 	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-	//[authrize]
-	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;//unauth
+	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 	options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>//verified key
+})
+.AddJwtBearer(options =>
 {
 	options.SaveToken = true;
 	options.RequireHttpsMetadata = false;
@@ -54,11 +50,9 @@ builder.Services.AddAuthentication(options =>
 		IssuerSigningKey =
 			new SymmetricSecurityKey(
 				Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
-
 	};
 });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddScoped<IBlogPostRepo, BlogPostRepo>();
 builder.Services.AddScoped<IBlogPostHasTagRepo, BlogPostHasTagRepo>();
 builder.Services.AddScoped<ITagRepo, TagRepo>();
@@ -66,18 +60,16 @@ builder.Services.AddScoped<ICommentRepo, CommentRepo>();
 builder.Services.AddTransient<ITokenRepo, TokenRepo>();
 builder.Services.AddTransient<RevokeMiddleWare>();
 
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(swagger =>
 {
-	//This is to generate the Default UI of Swagger Documentation    
 	swagger.SwaggerDoc("v1", new OpenApiInfo
 	{
 		Version = "v1",
-		Title = "ASP.NET 8 Web API",
-		Description = " ITI Projrcy"
+		Title = "ASP.NET 8 Web API",
+		Description = "ITI Project"
 	});
-	// To Enable authorization using Swagger (JWT)    
+
 	swagger.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
 	{
 		Name = "Authorization",
@@ -85,43 +77,65 @@ builder.Services.AddSwaggerGen(swagger =>
 		Scheme = "Bearer",
 		BearerFormat = "JWT",
 		In = ParameterLocation.Header,
-		Description = "Enter 'Bearer' [space] and then your valid token in the text input below.\r\n\r\nExample: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\"",
+		Description = "Enter 'Bearer' [space] and then your valid token in the text input below.\r\n\r\nExample: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\"",
 	});
 	swagger.AddSecurityRequirement(new OpenApiSecurityRequirement
+	{
+		{
+			new OpenApiSecurityScheme
+			{
+				Reference = new OpenApiReference
 				{
-					{
-					new OpenApiSecurityScheme
-					{
-					Reference = new OpenApiReference
-					{
 					Type = ReferenceType.SecurityScheme,
 					Id = "Bearer"
-					}
-					},
-					new string[] {}
-					}
-					});
+				}
+			},
+			new string[] {}
+		}
+	});
 });
-//using Microsoft.AspNetCore.Identity;
-
-//app.Lifetime.ApplicationStarted.Register(async () =>
-//{
-//	using var scope = app.Services.CreateScope();
-//	var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-//	string[] roles = new[] { "AUTHOR", "ADMIN", "USER" };
-
-//	foreach (var role in roles)
-//	{
-//		if (!await roleManager.RoleExistsAsync(role))
-//		{
-//			await roleManager.CreateAsync(new IdentityRole(role));
-//		}
-//	}
-//});
-
 
 var app = builder.Build();
+
+// Create roles on app startup
+app.Lifetime.ApplicationStarted.Register(async () =>
+{
+	using var scope = app.Services.CreateScope();
+	var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+	var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+
+	string[] roles = new[] { "ADMIN", "AUTHOR", "USER" };
+
+	foreach (var role in roles)
+	{
+		if (!await roleManager.RoleExistsAsync(role))
+		{
+			await roleManager.CreateAsync(new IdentityRole(role));
+		}
+	}
+
+	// Create default admin user
+	string adminEmail = "admin@planty.com";
+	string adminPassword = "Admin@123";
+
+	var adminUser = await userManager.FindByEmailAsync(adminEmail);
+	if (adminUser == null)
+	{
+		var newAdmin = new AppUser
+		{
+			UserName = adminEmail,
+			Email = adminEmail,
+			EmailConfirmed = true
+		};
+
+		var result = await userManager.CreateAsync(newAdmin, adminPassword);
+		if (result.Succeeded)
+		{
+			await userManager.AddToRoleAsync(newAdmin, "ADMIN");
+		}
+	}
+});
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -133,7 +147,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();

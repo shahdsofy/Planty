@@ -1,131 +1,116 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Planty.Data;
 using Planty.DTO;
 using Planty.IRepository;
 using Planty.Models;
 
-public class CartRepository : ICartRepository
+namespace Planty.Repository
 {
-	private readonly ApplicationDbContext _context;
-
-	public CartRepository(ApplicationDbContext context)
+	public class CartRepository : ICartRepository
 	{
-		_context = context;
-	}
+		private readonly ApplicationDbContext _context;
 
-	public async Task<object> GetCartItemsByUserIdAsync(string userId)
-	{
-		int userIdInt = int.Parse(userId);
-
-		var cart = await _context.Carts
-			.Include(c => c.CartItems)
-			.ThenInclude(ci => ci.Plant)
-			.FirstOrDefaultAsync(c => c.UserID == userIdInt);
-
-		if (cart == null || !cart.CartItems.Any())
+		public CartRepository(ApplicationDbContext context)
 		{
-			return new
-			{
-				Items = new List<object>(),
-				Total = 0m
-			};
+			_context = context;
 		}
 
-		var items = cart.CartItems.Select(ci => new
+		public async Task<object> GetCartItemsByUserIdAsync(string userId)
 		{
-			PlantId = ci.PlantID,
-			PlantName = ci.Plant.Name,
-			Price = ci.Plant.Price,
-			Quantity = ci.Quantity,
-			TotalPrice = ci.Quantity * ci.Plant.Price
-		}).ToList();
+			var cart = await _context.Carts
+				.Include(c => c.CartItems)
+				.ThenInclude(ci => ci.Plant)
+				.FirstOrDefaultAsync(c => c.UserID == userId);
 
-		var total = items.Sum(i => i.TotalPrice);
+			if (cart == null || !cart.CartItems.Any())
+				return new List<object>();
 
-		return new
+			return cart.CartItems.Select(item => new
+			{
+				item.PlantID,
+				item.Plant.Name,
+				item.Quantity,
+				item.Plant.Price,
+				Total = item.Quantity * item.Plant.Price
+			}).ToList();
+		}
+
+		public async Task<bool> RemoveItemFromCartAsync(string userId, int productId)
 		{
-			Items = items,
-			Total = total
-		};
-	}
+			var cart = await _context.Carts
+				.Include(c => c.CartItems)
+				.FirstOrDefaultAsync(c => c.UserID == userId);
 
+			var item = cart?.CartItems.FirstOrDefault(ci => ci.PlantID == productId);
+			if (item == null) return false;
 
-	public async Task<bool> RemoveItemFromCartAsync(string userId, int productId)
-	{
-		int userIdInt = int.Parse(userId);
+			_context.CartItems.Remove(item);
+			await _context.SaveChangesAsync();
+			return true;
+		}
 
-		var cart = await _context.Carts
-			.Include(c => c.CartItems)
-			.FirstOrDefaultAsync(c => c.UserID == userIdInt);
-
-		if (cart == null)
-			return false;
-
-		var item = cart.CartItems.FirstOrDefault(ci => ci.PlantID == productId);
-		if (item == null)
-			return false;
-
-		_context.Remove(item);
-		await _context.SaveChangesAsync();
-		return true;
-	}
-
-
-	public async Task ClearCartAsync(string userId)
-	{
-		int userIdInt = int.Parse(userId);
-
-		var cart = await _context.Carts
-			.Include(c => c.CartItems)
-			.FirstOrDefaultAsync(c => c.UserID == userIdInt);
-
-		if (cart != null)
+		public async Task ClearCartAsync(string userId)
 		{
+			var cart = await _context.Carts
+				.Include(c => c.CartItems)
+				.FirstOrDefaultAsync(c => c.UserID == userId);
+
+			if (cart != null)
+			{
+				_context.CartItems.RemoveRange(cart.CartItems);
+				await _context.SaveChangesAsync();
+			}
+		}
+
+		public async Task<bool> CheckoutAsync(string userId, CheckoutDTO dto)
+		{
+			var cart = await _context.Carts
+				.Include(c => c.CartItems)
+				.ThenInclude(ci => ci.Plant)
+				.FirstOrDefaultAsync(c => c.UserID == userId);
+
+			if (cart == null || !cart.CartItems.Any())
+				return false;
+
+			var order = new Order
+			{
+				UserID = userId,
+				OrderDate = DateTime.Now,
+				ShippingAddress = dto?.ShippingAddress,
+				Notes = dto?.Notes,
+				OrderItems = cart.CartItems.Select(ci => new OrderItem
+				{
+					PlantID = ci.PlantID,
+					Quantity = ci.Quantity,
+					Price = ci.Plant.Price
+				}).ToList(),
+				Status = Models.Enums.OrderStatus.Pending,
+				PaymentMethod = dto.PaymentMethod
+			};
+
+			await _context.Orders.AddAsync(order);
 			_context.CartItems.RemoveRange(cart.CartItems);
 			await _context.SaveChangesAsync();
-		}
-	}
-	// Repositories/CartRepository.cs
-	public async Task<bool> CheckoutAsync(string userId, CheckoutDTO checkoutData)
-	{
-		int userIdInt = int.Parse(userId);
-		var cart = await _context.Carts
-			.Include(c => c.CartItems)
-			.ThenInclude(ci => ci.Plant)
-			.FirstOrDefaultAsync(c => c.UserID == userIdInt);
-
-		if (cart == null || cart.CartItems.Count == 0)
-			return false;
-
-		var newOrder = new Order
-		{
-			UserID = userIdInt,
-			OrderDate = DateTime.Now,
-			ShippingAddress = checkoutData?.ShippingAddress,
-			Notes = checkoutData?.Notes,
-			OrderItems = new List<OrderItem>(),
-			PaymentMethod = checkoutData.PaymentMethod
-		};
-
-		foreach (var item in cart.CartItems)
-		{
-			newOrder.OrderItems.Add(new OrderItem
-			{
-				PlantID = item.PlantID,
-				Quantity = item.Quantity,
-				Price = item.Plant.Price // Assuming Plant has a Price property
-			});
+			return true;
 		}
 
-		_context.Orders.Add(newOrder);
+		public async Task<Cart?> GetCartByUserIdAsync(string userId)
+		{
+			return await _context.Carts
+				.Include(c => c.CartItems)
+				.FirstOrDefaultAsync(c => c.UserID == userId);
+		}
 
-		// Clear cart
-		_context.CartItems.RemoveRange(cart.CartItems);
+		public async Task CreateCartAsync(Cart cart)
+		{
+			await _context.Carts.AddAsync(cart);
+		}
 
-		await _context.SaveChangesAsync();
-		return true;
+		public async Task SaveAsync()
+		{
+			await _context.SaveChangesAsync();
+		}
+
+
 	}
-
 }
-

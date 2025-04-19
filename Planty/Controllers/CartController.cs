@@ -1,12 +1,7 @@
-﻿// Controllers/CartController.cs
-using Blog_Platform;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Planty.Data;
 using Planty.DTO;
-using Planty.IRepository;
-using Planty.Models;
+using Planty.Services.Interfaces;
 using System.Security.Claims;
 
 namespace Planty.Controllers
@@ -16,142 +11,66 @@ namespace Planty.Controllers
 	[ApiController]
 	public class CartController : ControllerBase
 	{
-		private readonly ApplicationDbContext _context;
-		private readonly ICartRepository cartRepository;
+		private readonly ICartService _cartService;
 
-		public CartController(ApplicationDbContext context, ICartRepository cartRepository)
+		public CartController(ICartService cartService)
 		{
-			_context = context;
-			this.cartRepository = cartRepository;
+			_cartService = cartService;
 		}
 
-
-
 		[HttpPost("AddToCart")]
-		[Authorize]
 		public async Task<IActionResult> AddToCart([FromBody] CartItemDto dto)
 		{
-
 			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-			int userIdInt = int.Parse(userId);
+			if (userId == null) return Unauthorized();
 
-			if (userId == null)
-				return Unauthorized();
+			bool result = await _cartService.AddToCartAsync(userId, dto);
 
-			var cart = await _context.Carts
-				.Include(c => c.CartItems)
-				.FirstOrDefaultAsync(c => c.UserID == userIdInt);
-
-			if (cart == null)
-			{
-				cart = new Cart
-				{
-					UserID = userIdInt,
-					CartItems = new List<CartItem>()
-				};
-				_context.Carts.Add(cart);
-			}
-
-			var existingItem = cart.CartItems
-				.FirstOrDefault(ci => ci.PlantID == dto.PlantID);
-
-			if (existingItem != null)
-			{
-				existingItem.Quantity += dto.Quantity;
-			}
-			else
-			{
-				cart.CartItems.Add(new CartItem
-				{
-					PlantID = dto.PlantID,
-					Quantity = dto.Quantity
-				});
-			}
-
-			await _context.SaveChangesAsync();
-			return Ok("Item added to cart successfully");
+			return result ? Ok("Item added successfully.") : BadRequest("Failed to add item.");
 		}
 
 		[HttpGet("GetCart")]
-		[Authorize]
-		public async Task<ActionResult<GeneralResponse>> GetCartItems()
+		public async Task<IActionResult> GetCartItems()
 		{
 			string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-			var cartItems = await cartRepository.GetCartItemsByUserIdAsync(userId);
+			var cartItems = await _cartService.GetCartItemsAsync(userId);
 
-			return new GeneralResponse()
-			{
-				Success = true,
-				Content = cartItems
-			};
+			return Ok(new { Success = true, Content = cartItems });
 		}
+
 		[HttpDelete("RemoveFromCart/{productId}")]
-		[Authorize]
-		public async Task<ActionResult<GeneralResponse>> RemoveFromCart(int productId)
+		public async Task<IActionResult> RemoveFromCart(int productId)
 		{
 			string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+			var result = await _cartService.RemoveItemFromCartAsync(userId, productId);
 
-			bool isRemoved = await cartRepository.RemoveItemFromCartAsync(userId, productId);
-
-			if (isRemoved)
+			return Ok(new
 			{
-				return new GeneralResponse()
-				{
-					Success = true,
-					Content = "Item removed successfully."
-				};
-			}
-
-			return new GeneralResponse()
-			{
-				Success = false,
-				Content = "Item not found or already removed."
-			};
+				Success = result,
+				Content = result ? "Item removed successfully." : "Item not found."
+			});
 		}
-
-
 
 		[HttpDelete("ClearCart")]
-		[Authorize]
-		public async Task<ActionResult<GeneralResponse>> ClearCart()
+		public async Task<IActionResult> ClearCart()
 		{
 			string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+			await _cartService.ClearCartAsync(userId);
 
-			await cartRepository.ClearCartAsync(userId);
-
-			return new GeneralResponse()
-			{
-				Success = true,
-				Content = "Cart cleared successfully."
-			};
+			return Ok(new { Success = true, Content = "Cart cleared successfully." });
 		}
 
-		[HttpPost("checkout")]
-		[Authorize]
-		public async Task<ActionResult<GeneralResponse>> Checkout([FromBody] CheckoutDTO dto)
+		[HttpPost("Checkout")]
+		public async Task<IActionResult> Checkout([FromBody] CheckoutDTO dto)
 		{
 			string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+			var result = await _cartService.CheckoutAsync(userId, dto);
 
-			bool isCheckedOut = await cartRepository.CheckoutAsync(userId, dto);
-
-			if (isCheckedOut)
+			return Ok(new
 			{
-				return new GeneralResponse
-				{
-					Success = true,
-					Content = "Order created successfully."
-				};
-			}
-
-			return new GeneralResponse
-			{
-				Success = false,
-				Content = "Checkout failed. Cart might be empty."
-			};
+				Success = result,
+				Content = result ? "Order created successfully." : "Checkout failed."
+			});
 		}
-
-
-
-
 	}
 }

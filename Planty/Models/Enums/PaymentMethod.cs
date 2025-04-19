@@ -3,7 +3,7 @@ namespace Planty.Models.Enums
 {
 	public enum PaymentMethod
 	{
-		CashOnDelivery,
+		Cash,
 		CreditCard,
 		PayPal,
 		VodafoneCash

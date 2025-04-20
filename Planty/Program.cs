@@ -128,28 +128,9 @@ app.Lifetime.ApplicationStarted.Register(async () =>
 			await roleManager.CreateAsync(new IdentityRole(role));
 		}
 	}
+	//allow use static files
+	app.UseStaticFiles();
 
-	// Create default admin user
-	//string adminEmail = "admin@planty.com";
-	//string adminPassword = "Admin@123";
-
-
-	//var adminUser = await userManager.FindByEmailAsync(adminEmail);
-	//if (adminUser == null)
-	//{
-	//	var newAdmin = new AppUser
-	//	{
-	//		UserName = adminEmail,
-	//		Email = adminEmail,
-	//		EmailConfirmed = true
-	//	};
-
-	//	var result = await userManager.CreateAsync(newAdmin, adminPassword);
-	//	if (result.Succeeded)
-	//	{
-	//		await userManager.AddToRoleAsync(newAdmin, "ADMIN");
-	//	}
-	//}
 });
 
 

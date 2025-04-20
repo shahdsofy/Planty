@@ -30,6 +30,7 @@ namespace Planty.Repositories
 
 		public Task<List<Plant>> GetAllPlantsAsync() => _context.Plants.ToListAsync();
 		public Task<Plant?> GetPlantByIdAsync(int id) => _context.Plants.FindAsync(id).AsTask();
+
 		public async Task AddPlantAsync(Plant plant) => await _context.Plants.AddAsync(plant);
 		public Task UpdatePlantAsync(Plant plant)
 		{

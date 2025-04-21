@@ -73,7 +73,7 @@ namespace Planty.Controllers
         {
             if (ModelState.IsValid)
             {
-                AppUser? user = await userManager.FindByNameAsync(loginUser.UserName);
+                AppUser? user = await userManager.FindByEmailAsync(loginUser.Email);
                 if (user is not null)
                 {
                     bool check = await userManager.CheckPasswordAsync(user, loginUser.Password);

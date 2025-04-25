@@ -9,9 +9,9 @@ namespace Planty.Models
 		public string Author { get; set; }
 		public string Content { get; set; }
 		public DateTime CreatedAt { get; set; }
-		//[ForeignKey("User")]
-		public int UserID { get; set; }
-		//public User User { get; set; } //M:1
+		[ForeignKey("User")]
+		public string UserID { get; set; }
+
 		public ICollection<Comment> Comments { get; set; } //1:M
 	}
 }

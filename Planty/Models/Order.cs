@@ -12,13 +12,13 @@ public class Order
 	public decimal TotalPrice { get; set; }
 
 	// Forign Key
-	public int UserID { get; set; }
+	public string UserID { get; set; }
 
 
 	public string? ShippingAddress { get; set; }
 	public string? Notes { get; set; }
 	public OrderStatus Status { get; set; } = OrderStatus.Pending;
-	public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CashOnDelivery;
+	public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cash;
 
 	// Navigation Properties
 	public ICollection<OrderItem> OrderItems { get; set; }

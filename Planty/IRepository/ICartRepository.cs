@@ -8,6 +8,9 @@ namespace Planty.IRepository
 		Task<object> GetCartItemsByUserIdAsync(string userId);
 		Task<bool> RemoveItemFromCartAsync(string userId, int productId);
 		Task ClearCartAsync(string userId);
-		Task<bool> CheckoutAsync(string userId, CheckoutDTO checkoutData);
+		Task<bool> CheckoutAsync(string userId, CheckoutDTO dto);
+		Task<Cart?> GetCartByUserIdAsync(string userId);
+		Task CreateCartAsync(Cart cart);
+		Task SaveAsync();
 	}
 }

@@ -1,13 +1,6 @@
-﻿
-//}
-
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Planty.Data;
-using Planty.DTO;
-using Planty.Models;
-using Planty.Models.Enums;
+using Planty.Services.Interfaces;
 using System.Security.Claims;
 
 namespace Planty.Controllers
@@ -17,28 +10,18 @@ namespace Planty.Controllers
 	[Authorize]
 	public class OrderController : ControllerBase
 	{
-		private readonly ApplicationDbContext _context;
+		private readonly IOrderService _service;
 
-		public OrderController(ApplicationDbContext context)
+		public OrderController(IOrderService service)
 		{
-			_context = context;
+			_service = service;
 		}
-
-
-
 
 		[HttpGet("GetAllOrders")]
 		public async Task<IActionResult> GetUserOrders()
 		{
 			string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-			int userIdInt = int.Parse(userId);
-
-			var orders = await _context.Orders
-				.Where(o => o.UserID == userIdInt)
-				.Include(o => o.OrderItems)
-				.ThenInclude(oi => oi.Plant)
-				.OrderByDescending(o => o.OrderDate)
-				.ToListAsync();
+			var orders = await _service.GetUserOrdersAsync(userId);
 
 			var result = orders.Select(o => new
 			{
@@ -47,7 +30,7 @@ namespace Planty.Controllers
 				Status = o.Status.ToString(),
 				PaymentMethod = o.PaymentMethod.ToString(),
 				ShippingAddress = o.ShippingAddress,
-				Notes = o.Notes,
+				o.Notes,
 				Items = o.OrderItems.Select(oi => new
 				{
 					oi.PlantID,
@@ -60,51 +43,32 @@ namespace Planty.Controllers
 			return Ok(result);
 		}
 
-
 		[HttpGet("GetOrderStatus/{id}")]
 		public async Task<IActionResult> GetOrderStatus(int id)
 		{
 			string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-			int userIdInt = int.Parse(userId);
-
-			var order = await _context.Orders
-				.FirstOrDefaultAsync(o => o.OrderID == id && o.UserID == userIdInt);
+			var order = await _service.GetOrderStatusAsync(id, userId);
 
 			if (order == null)
 				return NotFound(new { Message = "Order not found." });
 
 			return Ok(new
 			{
-				OrderID = order.OrderID,
-				Status = order.Status.ToString() // convert enum to string
+				order.OrderID,
+				Status = order.Status.ToString()
 			});
 		}
-
 
 		[HttpPost("Cancel/{id}")]
 		public async Task<IActionResult> CancelOrder(int id)
 		{
 			string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-			int userIdInt = int.Parse(userId);
+			var canceled = await _service.CancelOrderAsync(id, userId);
 
-			var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == id && o.UserID == userIdInt);
-
-			if (order == null)
-				return NotFound("Order not found");
-
-
-			if (order.Status == OrderStatus.Shipped)
-				return BadRequest("Cannot cancel shipped order");
-
-			order.Status = OrderStatus.Canceled;
-			await _context.SaveChangesAsync();
+			if (!canceled)
+				return BadRequest("Order cannot be canceled or not found.");
 
 			return Ok("Order canceled successfully");
 		}
-
-
-
-
 	}
-
 }

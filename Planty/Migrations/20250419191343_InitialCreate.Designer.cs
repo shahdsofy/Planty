@@ -12,8 +12,8 @@ using Planty.Data;
 namespace Planty.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250330215547_blogs")]
-    partial class blogs
+    [Migration("20250419191343_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -243,8 +243,9 @@ namespace Planty.Migrations
                     b.Property<int>("NumberOfItems")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserID")
-                        .HasColumnType("int");
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("CartID");
 
@@ -392,11 +393,24 @@ namespace Planty.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderID"));
 
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserID")
+                    b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("OrderID");
 
@@ -405,21 +419,21 @@ namespace Planty.Migrations
 
             modelBuilder.Entity("Plant", b =>
                 {
-                    b.Property<int>("PlantID")
+                    b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PlantID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
                     b.Property<string>("Details")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("ImagePath")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PlantImage")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -430,7 +444,7 @@ namespace Planty.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("PlantID");
+                    b.HasKey("ID");
 
                     b.ToTable("Plants");
                 });
@@ -513,8 +527,8 @@ namespace Planty.Migrations
 
             modelBuilder.Entity("Profile", b =>
                 {
-                    b.Property<int>("UserID")
-                        .HasColumnType("int");
+                    b.Property<string>("UserID")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("ProfileNumber")
                         .HasColumnType("int");

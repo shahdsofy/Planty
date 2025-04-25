@@ -10,6 +10,14 @@ using Microsoft.OpenApi.Models;
 using Planty.Data;
 using Planty.Models;
 using System.Text;
+using Planty.Repositories.Interfaces;
+using Planty.Repositories;
+using Planty.Services.Interfaces;
+using Planty.Services;
+using Planty.IRepository;
+using Planty.Repository;
+using System.Text.Json.Serialization;
+// Planty.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +65,13 @@ builder.Services.AddScoped<IBlogPostRepo, BlogPostRepo>();
 builder.Services.AddScoped<IBlogPostHasTagRepo, BlogPostHasTagRepo>();
 builder.Services.AddScoped<ITagRepo, TagRepo>();
 builder.Services.AddScoped<ICommentRepo, CommentRepo>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+
 builder.Services.AddTransient<ITokenRepo, TokenRepo>();
 builder.Services.AddTransient<RevokeMiddleWare>();
 
@@ -113,27 +128,9 @@ app.Lifetime.ApplicationStarted.Register(async () =>
 			await roleManager.CreateAsync(new IdentityRole(role));
 		}
 	}
+	//allow use static files
+	app.UseStaticFiles();
 
-	// Create default admin user
-	string adminEmail = "admin@planty.com";
-	string adminPassword = "Admin@123";
-
-	var adminUser = await userManager.FindByEmailAsync(adminEmail);
-	if (adminUser == null)
-	{
-		var newAdmin = new AppUser
-		{
-			UserName = adminEmail,
-			Email = adminEmail,
-			EmailConfirmed = true
-		};
-
-		var result = await userManager.CreateAsync(newAdmin, adminPassword);
-		if (result.Succeeded)
-		{
-			await userManager.AddToRoleAsync(newAdmin, "ADMIN");
-		}
-	}
 });
 
 

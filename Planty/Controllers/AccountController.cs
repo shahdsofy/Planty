@@ -42,97 +42,97 @@ namespace Planty.Controllers
 				if (identityResult.Succeeded)
 				{
 
-					string UserId = await userManager.GetUserIdAsync(user);
-					identityResult = await userManager.AddClaimAsync(user, new Claim(ClaimTypes.Name, registerUser.Username));
-					await userManager.AddClaimAsync(user, new Claim(ClaimTypes.Email, registerUser.Email));
-					await userManager.AddClaimAsync(user, new Claim("Password", registerUser.Password));
-					await userManager.AddClaimAsync(user, new Claim(ClaimTypes.NameIdentifier, UserId));
-					identityResult = await userManager.AddToRoleAsync(user, "Author");
-					if (identityResult.Succeeded)
-					{
-						return new GeneralResponse()
-						{
-							Success = true,
-							Content = "Add user success"
-						};
-					}
-				}
-				foreach (var item in identityResult.Errors)
-				{
-					ModelState.AddModelError("", item.Description);
-				}
-			}
-			return new GeneralResponse()
-			{
-				Success = false,
-				Content = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage)
-			};
-		}
-		[HttpPost("Login")]
-		public async Task<ActionResult<GeneralResponse>> Login(LoginUserDTO loginUser) //: Authenticate users and provide access tokens.
-		{
-			if (ModelState.IsValid)
-			{
-				AppUser? user = await userManager.FindByNameAsync(loginUser.UserName);
-				if (user is not null)
-				{
-					bool check = await userManager.CheckPasswordAsync(user, loginUser.Password);
-					if (check)
-					{
-						List<Claim> claims = new List<Claim>();
-						claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
-						claims.Add(new Claim(ClaimTypes.Name, user.UserName));
-						claims.Add(new Claim(ClaimTypes.Email, user.Email));
-						claims.Add(new Claim("Password", loginUser.Password));
-						claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
-						var Roles = await userManager.GetRolesAsync(user);
-						foreach (var Role in Roles)
-						{
-							claims.Add(new Claim(ClaimTypes.Role, Role));
-						}
-						SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Key"]!));
-						SigningCredentials signing = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-						JwtSecurityToken DescriptionToken = new JwtSecurityToken
-							(
-								issuer: configuration["JWT:issuer"],
-								audience: configuration["JWT:audience"],
-								claims: claims,
-								expires: DateTime.Now.AddDays(1),
-								signingCredentials: signing
-							);
-						string token = new JwtSecurityTokenHandler().WriteToken(DescriptionToken);
-						if (tokenRepo.IsExistBefore(user.Id))
-						{
-							var temp = tokenRepo.GetByUserId(user.Id);
-							temp.token = token;
-							temp.IsRevoked = false;
-							tokenRepo.Update(temp);
-						}
-						else
-						{
-							tokenRepo.Add(new Token()
-							{
-								UserId = user.Id,
-								token = token,
-								IsRevoked = false
-							});
-						}
-						tokenRepo.Save();
-						return new GeneralResponse()
-						{
-							Success = true,
-							Content = token
-						};
-					}
-					else
-					{
-						return new GeneralResponse()
-						{
-							Success = false,
-							Content = "Password or UserName invalid"
-						};
-					}
-				}
+                    string UserId = await userManager.GetUserIdAsync(user);
+                    identityResult = await userManager.AddClaimAsync(user, new Claim(ClaimTypes.Name, registerUser.Username));
+                    await userManager.AddClaimAsync(user, new Claim(ClaimTypes.Email, registerUser.Email));
+                    await userManager.AddClaimAsync(user, new Claim("Password", registerUser.Password));
+                    await userManager.AddClaimAsync(user, new Claim(ClaimTypes.NameIdentifier, UserId));
+                    identityResult = await userManager.AddToRoleAsync(user, "Author");
+                    if (identityResult.Succeeded)
+                    {
+                        return new GeneralResponse()
+                        {
+                            Success = true,
+                            Content = "Add user success"
+                        };
+                    }
+                }
+                foreach (var item in identityResult.Errors)
+                {
+                    ModelState.AddModelError("", item.Description);
+                }
+            }
+            return new GeneralResponse()
+            {
+                Success = false,
+                Content = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage)
+            };
+        }
+        [HttpPost("Login")]
+        public async Task<ActionResult<GeneralResponse>> Login(LoginUserDTO loginUser) //: Authenticate users and provide access tokens.
+        {
+            if (ModelState.IsValid)
+            {
+                AppUser? user = await userManager.FindByNameAsync(loginUser.UserName);
+                if (user is not null)
+                {
+                    bool check = await userManager.CheckPasswordAsync(user, loginUser.Password);
+                    if (check)
+                    {
+                        List<Claim> claims = new List<Claim>();
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
+                        claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+                        claims.Add(new Claim(ClaimTypes.Email, user.Email));
+                        claims.Add(new Claim("Password", loginUser.Password));
+                        claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+                        var Roles = await userManager.GetRolesAsync(user);
+                        foreach (var Role in Roles)
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, Role));
+                        }
+                        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Key"]!));
+                        SigningCredentials signing = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                        JwtSecurityToken DescriptionToken = new JwtSecurityToken
+                            (
+                                issuer: configuration["JWT:issuer"],
+                                audience: configuration["JWT:audience"],
+                                claims: claims,
+                                expires: DateTime.Now.AddDays(1),
+                                signingCredentials: signing
+                            );
+                        string token = new JwtSecurityTokenHandler().WriteToken(DescriptionToken);
+                        if (tokenRepo.IsExistBefore(user.Id))
+                        {
+                            var temp = tokenRepo.GetByUserId(user.Id);
+                            temp.token = token;
+                            temp.IsRevoked = false;
+                            tokenRepo.Update(temp);
+                        }
+                        else
+                        {
+                            tokenRepo.Add(new Token()
+                            {
+                                UserId = user.Id,
+                                token = token,
+                                IsRevoked = false
+                            });
+                        }
+                        tokenRepo.Save();
+                        return new GeneralResponse()
+                        {
+                            Success = true,
+                            Content = token
+                        };
+                    }
+                    else
+                    {
+                        return new GeneralResponse()
+                        {
+                            Success = false,
+                            Content = "Password or UserName invalid"
+                        };
+                    }
+                }
 
 			}
 			return new GeneralResponse()

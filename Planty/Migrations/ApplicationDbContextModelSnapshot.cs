@@ -41,6 +41,9 @@ namespace Planty.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("FullName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -63,6 +66,9 @@ namespace Planty.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -111,11 +117,8 @@ namespace Planty.Migrations
                         .HasColumnType("DateTime")
                         .HasColumnName("CreatedDate");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar")
-                        .HasColumnName("Title");
+                    b.Property<string>("PostPicture")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdatedDate")
                         .HasColumnType("DateTime")
@@ -126,23 +129,6 @@ namespace Planty.Migrations
                     b.HasIndex("AuthorId");
 
                     b.ToTable("Posts");
-                });
-
-            modelBuilder.Entity("Blog_Platform.Models.BlogPostHasTag", b =>
-                {
-                    b.Property<int>("TagId")
-                        .HasColumnType("int")
-                        .HasColumnName("TagId");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int")
-                        .HasColumnName("PostId");
-
-                    b.HasKey("TagId", "PostId");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("BlogPostHasTags");
                 });
 
             modelBuilder.Entity("Blog_Platform.Models.Comment", b =>
@@ -158,6 +144,10 @@ namespace Planty.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("AuthorId");
+
+                    b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -184,29 +174,6 @@ namespace Planty.Migrations
                     b.HasIndex("PostId");
 
                     b.ToTable("Comments");
-                });
-
-            modelBuilder.Entity("Blog_Platform.Models.Tag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("TagId");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar")
-                        .HasColumnName("Name");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("Blog_Platform.Models.Token", b =>
@@ -390,6 +357,9 @@ namespace Planty.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderID"));
 
+                    b.Property<string>("AppUserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
@@ -410,6 +380,8 @@ namespace Planty.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("OrderID");
+
+                    b.HasIndex("AppUserId");
 
                     b.ToTable("Orders");
                 });
@@ -522,25 +494,6 @@ namespace Planty.Migrations
                     b.ToTable("Stocks");
                 });
 
-            modelBuilder.Entity("Profile", b =>
-                {
-                    b.Property<string>("UserID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("ProfileNumber")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Bio")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProfilePicture")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserID", "ProfileNumber");
-
-                    b.ToTable("Profiles");
-                });
-
             modelBuilder.Entity("Blog_Platform.Models.BlogPost", b =>
                 {
                     b.HasOne("Blog_Platform.Models.AppUser", "AppUser")
@@ -550,25 +503,6 @@ namespace Planty.Migrations
                         .IsRequired();
 
                     b.Navigation("AppUser");
-                });
-
-            modelBuilder.Entity("Blog_Platform.Models.BlogPostHasTag", b =>
-                {
-                    b.HasOne("Blog_Platform.Models.BlogPost", "BlogPost")
-                        .WithMany("BlogPostHasTags")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Blog_Platform.Models.Tag", "Tag")
-                        .WithMany("BlogPostHasTags")
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("BlogPost");
-
-                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("Blog_Platform.Models.Comment", b =>
@@ -652,6 +586,13 @@ namespace Planty.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Order", b =>
+                {
+                    b.HasOne("Blog_Platform.Models.AppUser", null)
+                        .WithMany("orders")
+                        .HasForeignKey("AppUserId");
+                });
+
             modelBuilder.Entity("Planty.Models.CartItem", b =>
                 {
                     b.HasOne("Cart", "Cart")
@@ -708,19 +649,14 @@ namespace Planty.Migrations
                     b.Navigation("Token")
                         .IsRequired();
 
+                    b.Navigation("orders");
+
                     b.Navigation("posts");
                 });
 
             modelBuilder.Entity("Blog_Platform.Models.BlogPost", b =>
                 {
-                    b.Navigation("BlogPostHasTags");
-
                     b.Navigation("Comments");
-                });
-
-            modelBuilder.Entity("Blog_Platform.Models.Tag", b =>
-                {
-                    b.Navigation("BlogPostHasTags");
                 });
 
             modelBuilder.Entity("Cart", b =>

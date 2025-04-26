@@ -17,6 +17,8 @@ using Planty.Services;
 using Planty.IRepository;
 using Planty.Repository;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.Options;
 // Planty.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,12 +34,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(option =>
 {
-	option.Password.RequiredLength = 8;
+    option.SignIn.RequireConfirmedEmail = true;
+    option.Password.RequiredLength = 8;
 	option.Password.RequireNonAlphanumeric = false;
 	option.Password.RequireUppercase = false;
 	option.Password.RequireLowercase = false;
 	option.Password.RequireDigit = false;
-}).AddEntityFrameworkStores<ApplicationDbContext>();
+}).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders(); 
 
 builder.Services.AddAuthentication(options =>
 {
@@ -60,10 +63,7 @@ builder.Services.AddAuthentication(options =>
 				Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
 	};
 });
-
 builder.Services.AddScoped<IBlogPostRepo, BlogPostRepo>();
-builder.Services.AddScoped<IBlogPostHasTagRepo, BlogPostHasTagRepo>();
-builder.Services.AddScoped<ITagRepo, TagRepo>();
 builder.Services.AddScoped<ICommentRepo, CommentRepo>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<ICartService, CartService>();

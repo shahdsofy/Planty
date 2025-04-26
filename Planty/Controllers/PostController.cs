@@ -4,7 +4,9 @@ using Blog_Platform.IRepository;
 using Blog_Platform.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Planty.DTO;
 using System.Security.Claims;
 
 namespace Planty.Controllers
@@ -14,37 +16,49 @@ namespace Planty.Controllers
     public class PostController : ControllerBase
     {
         private readonly IBlogPostRepo blogPostRepo;
-        private readonly ITagRepo tagRepo;
-        private readonly IBlogPostHasTagRepo blogPostHasTagRepo;
+       
         private readonly ICommentRepo commentRepo;
+        private readonly UserManager<AppUser> userManager;
 
-        public PostController(IBlogPostRepo blogPostRepo, ITagRepo tagRepo, IBlogPostHasTagRepo blogPostHasTagRepo, ICommentRepo commentRepo)
+        public PostController(IBlogPostRepo blogPostRepo, ICommentRepo commentRepo,UserManager<AppUser> userManager)
         {
             this.blogPostRepo = blogPostRepo;
-            this.tagRepo = tagRepo;
-            this.blogPostHasTagRepo = blogPostHasTagRepo;
+            
             this.commentRepo = commentRepo;
+            this.userManager = userManager;
         }
         [HttpPost]
-        [Authorize(Roles = "Admin,Author")]
-        public ActionResult<GeneralResponse> CreatePost(AddBlogPostDTO blogPostDTO)//: Allow authenticated users to create new blog posts.
+        [Authorize(Roles = "ADMIN,AUTHOR")]
+        public async Task<ActionResult<GeneralResponse>> CreatePost([FromForm]  AddBlogPostDTO blogPostDTO, [FromForm]  IFormFile file)//: Allow authenticated users to create new blog posts.
         {
             if (ModelState.IsValid)
             {
                 BlogPost post = new BlogPost()
                 {
-                    Title = blogPostDTO.Title,
                     Content = blogPostDTO.Content,
                     UpdatedDate = DateTime.Now,
                     CreatedDate = DateTime.Now,
                     AuthorId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value
                 };
+
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var filePath = Path.Combine("wwwroot/posts", fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                post.PostPicture = $"/posts/{fileName}";
+
+              
+
                 blogPostRepo.Add(post);
                 blogPostRepo.Save();
                 int postId = blogPostRepo.GetLastPostId();
                 if (postId != 0)
                 {
-                    HelpAddAndUpdatePost.AddTagsForPost(blogPostDTO.Tags, postId, tagRepo, blogPostHasTagRepo);
+                    
                     return new GeneralResponse()
                     {
                         Success = true,
@@ -62,21 +76,27 @@ namespace Planty.Controllers
         [Authorize]
         public ActionResult<GeneralResponse> GetAllPosts()//: Retrieve a list of all blog posts.
         {
-            List<BlogPost> posts = blogPostRepo.GetAllPostsWithCommentsAndTags();
+            List<BlogPost> posts = blogPostRepo.GetAllPostsWithComments();
             List<ShowShortDataOfBlogPostDTO> postDTOs = new List<ShowShortDataOfBlogPostDTO>();
             foreach (BlogPost post in posts)
             {
                 ShowShortDataOfBlogPostDTO showData = new ShowShortDataOfBlogPostDTO()
                 {
-                    Title = post.Title,
                     Content = post.Content,
                     AuthorName = post.AppUser.UserName,
-                    Id = post.Id
+                    Id = post.Id,
+                    User_Picture=post.AppUser.ProfilePictureUrl,
+                    Post_Picture=post.PostPicture
                 };
+                
                 foreach (var item in post.Comments)
-                    showData.Comments.Add(item.Content);
-                foreach (var item in post.BlogPostHasTags)
-                    showData.BlogPostHasTags.Add(item.Tag.Name);
+                    showData.Comments.Add(new showCommentDTO
+                    {
+                        authorName = item.AuthorName,
+                        content = item.Content,
+                        authorPicture = userManager.Users.FirstOrDefault(x => x.Id == item.AuthorId).ProfilePictureUrl
+                    });
+
                 postDTOs.Add(showData);
             }
             return new GeneralResponse()
@@ -85,50 +105,51 @@ namespace Planty.Controllers
                 Content = postDTOs
             };
         }
-        [HttpGet("{Id:int}")]
-        [Authorize(Roles = "Admin,Author")]
-        public ActionResult<GeneralResponse> GetPostById(int Id)//: Retrieve details of a specific blog post.
-        {
-            BlogPost? post = blogPostRepo.GetPostByIdWithCommentsAndTags(Id);
-            if (post is not null)
-            {
-                ShowAllDataOfBlogPostDTO showData = new ShowAllDataOfBlogPostDTO()
-                {
-                    Title = post.Title,
-                    Content = post.Content,
-                    UpdatedDate = post.UpdatedDate,
-                    CreatedDate = post.CreatedDate,
-                    Id = post.Id,
-                    AuthorName = post.AppUser.UserName,
-                    AuthorId = post.AppUser.Id,
-                };
-                foreach (var item in post.Comments)
-                {
-                    ShowShortDataCommentForPostDTO commentForPostDTO = new ShowShortDataCommentForPostDTO()
-                    {
-                        AuthorName = item.AppUser.UserName,
-                        Id = item.Id,
-                        Content = item.Content,
-                        CreatedDate = item.CreatedDate
-                    };
-                    showData.Comments.Add(commentForPostDTO);
-                }
-                foreach (var item in post.BlogPostHasTags)
-                    showData.BlogPostHasTags.Add(item.Tag.Name);
-                return new GeneralResponse()
-                {
-                    Success = true,
-                    Content = showData
-                };
-            }
-            return new GeneralResponse()
-            {
-                Success = false,
-                Content = "Invalid Id for Post"
-            };
-        }
+        //[HttpGet("{Id:int}")]
+        //[Authorize(Roles = "ADMIN,AUTHOR")]
+        //public ActionResult<GeneralResponse> GetPostById(int Id)//: Retrieve details of a specific blog post.
+        //{
+        //    BlogPost? post = blogPostRepo.GetPostByIdWithComments(Id);
+        //    if (post is not null)
+        //    {
+        //        ShowAllDataOfBlogPostDTO showData = new ShowAllDataOfBlogPostDTO()
+        //        {
+                  
+        //            Content = post.Content,
+        //            UpdatedDate = post.UpdatedDate,
+        //            CreatedDate = post.CreatedDate,
+        //            Id = post.Id,
+        //            AuthorName = post.AppUser.UserName,
+        //            AuthorId = post.AppUser.Id,
+                   
+        //            Post_Picture = post.PostPicture
+        //        };
+        //        foreach (var item in post.Comments)
+        //        {
+        //            ShowShortDataCommentForPostDTO commentForPostDTO = new ShowShortDataCommentForPostDTO()
+        //            {
+        //                AuthorName = item.AppUser.UserName,
+        //                Id = item.Id,
+        //                Content = item.Content,
+        //                CreatedDate = item.CreatedDate
+        //            };
+        //            showData.Comments.Add(commentForPostDTO);
+        //        }
+               
+        //        return new GeneralResponse()
+        //        {
+        //            Success = true,
+        //            Content = showData
+        //        };
+        //    }
+        //    return new GeneralResponse()
+        //    {
+        //        Success = false,
+        //        Content = "Invalid Id for Post"
+        //    };
+        //}
         [HttpPut]
-        [Authorize(Roles = "Admin,Author")]
+        [Authorize(Roles = "ADMIN,AUTHOR")]
         public ActionResult<GeneralResponse> UpdatePost(UpdatePostDTO updatePost)//: Allow users to update their own blog posts.
         {
             if (ModelState.IsValid)
@@ -137,12 +158,12 @@ namespace Planty.Controllers
                 string UserId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
                 if (UserId == post.AuthorId)
                 {
-                    post.Title = updatePost.Title;
+                   
                     post.Content = updatePost.Content;
                     post.UpdatedDate = DateTime.Now;
                     blogPostRepo.Update(post);
                     blogPostRepo.Save();
-                    HelpAddAndUpdatePost.AddTagsForPost(updatePost.Tags, updatePost.Id, tagRepo, blogPostHasTagRepo);
+                    
                     return new GeneralResponse()
                     {
                         Success = true,
@@ -163,7 +184,7 @@ namespace Planty.Controllers
 
         }
         [HttpDelete]
-        [Authorize(Roles = "Admin,Author")]
+        [Authorize(Roles = "ADMIN,AUTHOR")]
         public ActionResult<GeneralResponse> DeletePost(int Id)//: Allow users to delete their own blog posts.
         {
             BlogPost? post = blogPostRepo.GetById(Id);

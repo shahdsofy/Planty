@@ -5,25 +5,24 @@
 namespace Planty.Migrations
 {
     /// <inheritdoc />
-    public partial class shimaa : Migration
+    public partial class postPicturecol : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "PaymentMethod",
-                table: "Orders",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+            migrationBuilder.AddColumn<string>(
+                name: "PostPicture",
+                table: "Posts",
+                type: "nvarchar(max)",
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "PaymentMethod",
-                table: "Orders");
+                name: "PostPicture",
+                table: "Posts");
         }
     }
 }

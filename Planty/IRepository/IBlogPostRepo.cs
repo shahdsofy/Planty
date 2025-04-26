@@ -4,8 +4,8 @@ namespace Blog_Platform.IRepository
 {
     public interface IBlogPostRepo:IRepo<BlogPost>
     {
-        List<BlogPost> GetAllPostsWithCommentsAndTags();
-        BlogPost? GetPostByIdWithCommentsAndTags(int Id);
+        List<BlogPost> GetAllPostsWithComments();
+        BlogPost? GetPostByIdWithComments(int Id);
         int GetLastPostId();
     }
 }

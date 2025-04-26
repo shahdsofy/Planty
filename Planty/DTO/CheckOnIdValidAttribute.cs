@@ -16,10 +16,7 @@ namespace Blog_Platform.DTO
                 Repo = Repo = validationContext.GetService<IBlogPostRepo>() as IRepo<T>;
             else if(typeof(T) == typeof(Comment))
                 Repo = Repo = validationContext.GetService<ICommentRepo>() as IRepo<T>;
-            else if(typeof(T) == typeof(Tag))
-                Repo = Repo = validationContext.GetService<ITagRepo>() as IRepo<T>;
-            else if(typeof(T) == typeof(BlogPostHasTag))
-                Repo = Repo = validationContext.GetService<IBlogPostHasTagRepo>() as IRepo<T>;
+            
             
             
             if (Repo is null)

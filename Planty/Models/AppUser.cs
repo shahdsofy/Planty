@@ -12,8 +12,14 @@ namespace Blog_Platform.Models
 {
 	public class AppUser : IdentityUser
 	{
-		public List<BlogPost> posts { get; set; } = new List<BlogPost>();
-		public List<Comment> Comments { get; set; } = new List<Comment>(); //: List of Comment he writes on Posts.
+		public string? FullName { get; set; }
+
+		public string? ProfilePictureUrl { get; set; }
+
+        public List<BlogPost>? posts { get; set; } = new List<BlogPost>();
+		public List<Comment>? Comments { get; set; } = new List<Comment>(); //: List of Comment he writes on Posts.
+
+		public List<Order>? orders { get; set; }=new List<Order>();
 		public Token Token { get; set; }
 	}
 }

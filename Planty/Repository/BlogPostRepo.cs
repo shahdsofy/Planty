@@ -10,10 +10,10 @@ namespace Blog_Platform.Repository
     {
         public BlogPostRepo(ApplicationDbContext context) : base(context) { }
 
-        public List<BlogPost> GetAllPostsWithCommentsAndTags()
+        public List<BlogPost> GetAllPostsWithComments()
         {
             return context.Posts.Include(x=>x.Comments).Include(x=>x.AppUser).
-                Include(x=>x.BlogPostHasTags).ThenInclude(x=>x.Tag).AsSingleQuery().ToList();
+                AsSingleQuery().ToList();
         }
 
         public int GetLastPostId()
@@ -21,10 +21,10 @@ namespace Blog_Platform.Repository
             return context.Posts.OrderBy(x=>x.CreatedDate).LastOrDefault()?.Id?? 0 ;
         }
 
-        public BlogPost? GetPostByIdWithCommentsAndTags(int Id)
+        public BlogPost? GetPostByIdWithComments(int Id)
         {
             return context.Posts.Include(x => x.Comments).ThenInclude(x=>x.AppUser).Include(x => x.AppUser).
-                Include(x => x.BlogPostHasTags).ThenInclude(x => x.Tag).AsSingleQuery().FirstOrDefault(x => x.Id == Id);
+                AsSingleQuery().FirstOrDefault(x => x.Id == Id);
         }
     }
 }

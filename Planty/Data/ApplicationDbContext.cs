@@ -12,7 +12,7 @@ namespace Planty.Data
 		#region Tables
 		//public DbSet<User> Users { get; set; }
 		//public DbSet<Admin> Admins { get; set; }
-		public DbSet<Profile> Profiles { get; set; }
+		
 		
 		public DbSet<Cart> Carts { get; set; }
 		public DbSet<CartItem> CartItems { get; set; }
@@ -25,8 +25,6 @@ namespace Planty.Data
 
         public DbSet<BlogPost> Posts { get; set; }
         public DbSet<Comment> Comments { get; set; }
-        public DbSet<Tag> Tags { get; set; }
-        public DbSet<BlogPostHasTag> BlogPostHasTags { get; set; }
         //public DbSet<Revoke> Revoke { get; set; }
         public DbSet<Token> Tokens { get; set; }
         //	public DbSet<UsersOrders> UsersOrders { get; set; }

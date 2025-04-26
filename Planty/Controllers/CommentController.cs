@@ -35,7 +35,8 @@ namespace Blog_Platform.Controllers
                     Content = addComment.Content,
                     CreatedDate = DateTime.Now,
                     UpdatedDate = DateTime.Now,
-                    PostId = addComment.PostId
+                    PostId = addComment.PostId,
+                    AuthorName= User.Claims.First(x => x.Type == ClaimTypes.Name).Value
                 };
                 commentRepo.Add(comment);
                 commentRepo.Save();

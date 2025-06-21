@@ -29,7 +29,7 @@ namespace Planty.Controllers
         }
         [HttpPost]
         [Authorize(Roles = "ADMIN,AUTHOR")]
-        public async Task<ActionResult<GeneralResponse>> CreatePost([FromForm]  AddBlogPostDTO blogPostDTO, [FromForm]  IFormFile file)//: Allow authenticated users to create new blog posts.
+        public async Task<ActionResult<GeneralResponse>> CreatePost([FromForm]  AddBlogPostDTO blogPostDTO, [FromForm]  IFormFile ? file)//: Allow authenticated users to create new blog posts.
         {
             if (ModelState.IsValid)
             {
@@ -41,17 +41,19 @@ namespace Planty.Controllers
                     AuthorId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value
                 };
 
-                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                var filePath = Path.Combine("wwwroot/posts", fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                if (file != null)
                 {
-                    await file.CopyToAsync(stream);
+                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                    var filePath = Path.Combine("wwwroot/posts", fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+
+                    post.PostPicture = $"/posts/{fileName}";
+
                 }
-
-                post.PostPicture = $"/posts/{fileName}";
-
-              
 
                 blogPostRepo.Add(post);
                 blogPostRepo.Save();
@@ -94,6 +96,7 @@ namespace Planty.Controllers
                     {
                         authorName = item.AuthorName,
                         content = item.Content,
+                        Id= item.Id,
                         authorPicture = userManager.Users.FirstOrDefault(x => x.Id == item.AuthorId).ProfilePictureUrl
                     });
 
@@ -191,7 +194,7 @@ namespace Planty.Controllers
             if (post is not null)
             {
                 var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
-                if (userId == post.AuthorId || User.IsInRole("Admin"))
+                if (userId == post.AuthorId || User.IsInRole("ADMIN"))
                 {
                     commentRepo.DeleteByPostId(Id);
                     blogPostRepo.Delete(Id);

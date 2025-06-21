@@ -36,7 +36,7 @@ namespace Planty.Controllers
 					oi.PlantID,
 					PlantName = oi.Plant.Name,
 					oi.Quantity,
-					oi.Price
+				   total= oi.Price * oi.Quantity
 				})
 			});
 

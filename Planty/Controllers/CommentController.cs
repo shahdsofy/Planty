@@ -124,7 +124,7 @@ namespace Blog_Platform.Controllers
             {
                 string UserId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
                 string AuthorId = commentRepo.GetAuthorIdOfComment(Id);
-                if(UserId == AuthorId || User.IsInRole("Admin"))
+                if(UserId == AuthorId || User.IsInRole("ADMIN"))
                 {
                     commentRepo.Delete(Id);
                     commentRepo.Save();

@@ -24,14 +24,14 @@ namespace Planty.Controllers
         private readonly UserManager<AppUser> userManager;
         private readonly IConfiguration configuration;
         private readonly ITokenRepo tokenRepo;
-        private readonly IConfiguration config;
+        
 
-        public AccountController(UserManager<AppUser> userManager, IConfiguration configuration, ITokenRepo tokenRepo,IConfiguration config)
+        public AccountController(UserManager<AppUser> userManager, IConfiguration configuration, ITokenRepo tokenRepo)
         {
             this.userManager = userManager;
             this.configuration = configuration;
             this.tokenRepo = tokenRepo;
-            this.config = config;
+           
         }
         [HttpPost("Register")]
         public async Task<ActionResult<GeneralResponse>> Register(RegisterUserDTO registerUser) //: Allow new users to create an account.
@@ -52,7 +52,7 @@ namespace Planty.Controllers
                     await userManager.AddClaimAsync(user, new Claim(ClaimTypes.Email, registerUser.Email));
                     await userManager.AddClaimAsync(user, new Claim("Password", registerUser.Password));
                     await userManager.AddClaimAsync(user, new Claim(ClaimTypes.NameIdentifier, UserId));
-                    identityResult = await userManager.AddToRoleAsync(user, "Author");
+                    identityResult = await userManager.AddToRoleAsync(user, "AUTHOR");
                     if (identityResult.Succeeded)
                     {
                         return new GeneralResponse()

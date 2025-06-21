@@ -82,7 +82,7 @@ namespace Planty.Repository
 				{
 					PlantID = ci.PlantID,
 					Quantity = ci.Quantity,
-					Price = ci.Plant.Price
+					Price = ci.Plant.Price*ci.Quantity
 				}).ToList(),
 				Status = Models.Enums.OrderStatus.Pending,
 				PaymentMethod = dto.PaymentMethod

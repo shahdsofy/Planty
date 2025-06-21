@@ -9,7 +9,7 @@ namespace Planty.Controllers
 {
 	[Route("api/admin/dashboard")]
 	[ApiController]
-	[Authorize(Roles = "ADMIN")]
+	
 	public class AdminDashboardController : ControllerBase
 	{
 		private readonly IAdminDashboardService _service;
@@ -21,7 +21,8 @@ namespace Planty.Controllers
 
 		#region Dashboard (Stats)
 		[HttpGet("Stats")]
-		public async Task<IActionResult> GetStats()
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> GetStats()
 		{
 			var stats = await _service.GetDashboardStatsAsync();
 			return Ok(stats);
@@ -30,14 +31,16 @@ namespace Planty.Controllers
 
 		#region Order Management
 		[HttpGet("Orders")]
-		public async Task<IActionResult> GetAllOrders()
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> GetAllOrders()
 		{
 			var orders = await _service.GetAllOrdersAsync();
 			return Ok(orders);
 		}
 
 		[HttpPut("OrderStatus/{id}")]
-		public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] string status)
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] string status)
 		{
 			var result = await _service.UpdateOrderStatusAsync(id, status);
 			return result ? Ok("Updated") : NotFound();
@@ -46,6 +49,7 @@ namespace Planty.Controllers
 
 		#region Plant Management
 		[HttpGet("Plants")]
+		[Authorize(Roles = "AUTHOR,ADMIN")]
 		public async Task<IActionResult> GetAllPlants()
 		{
 			var plants = await _service.GetAllPlantsAsync();
@@ -53,21 +57,26 @@ namespace Planty.Controllers
 		}
 
 		[HttpPost("Plant")]
-		public async Task<IActionResult> CreatePlant([FromBody] Plant plant)
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> CreatePlant([FromBody] Plant plant)
 		{
-			var created = await _service.CreatePlantAsync(plant);
+           
+
+            var created = await _service.CreatePlantAsync(plant);
 			return Ok(created);
 		}
 
 		[HttpPut("Plant/{id}")]
-		public async Task<IActionResult> UpdatePlant(int id, [FromBody] Plant updatedPlant)
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> UpdatePlant(int id, [FromBody] Plant updatedPlant)
 		{
 			var result = await _service.UpdatePlantAsync(id, updatedPlant);
 			return result ? Ok(updatedPlant) : NotFound();
 		}
 
 		[HttpDelete("Plant/{id}")]
-		public async Task<IActionResult> DeletePlant(int id)
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> DeletePlant(int id)
 		{
 			var result = await _service.DeletePlantAsync(id);
 			return result ? Ok() : NotFound();
@@ -76,7 +85,8 @@ namespace Planty.Controllers
 
 		#region Image Upload
 		[HttpPost("UploadImage")]
-		public async Task<IActionResult> UploadImage([FromForm] IFormFile imageFile)
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> UploadImage([FromForm] IFormFile imageFile)
 		{
 			if (imageFile == null || imageFile.Length == 0)
 				return BadRequest("No file uploaded");
@@ -98,14 +108,16 @@ namespace Planty.Controllers
 
 		#region User Management
 		[HttpGet("Users")]
-		public async Task<IActionResult> GetAllUsers()
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> GetAllUsers()
 		{
 			var users = await _service.GetAllUsersAsync();
 			return Ok(users);
 		}
 
 		[HttpDelete("User/{id}")]
-		public async Task<IActionResult> DeleteUser(string id)
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> DeleteUser(string id)
 		{
 			var result = await _service.DeleteUserAsync(id);
 			return result ? Ok() : NotFound();

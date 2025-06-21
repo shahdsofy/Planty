@@ -19,7 +19,7 @@ namespace Blog_Platform.Models
         public List<BlogPost>? posts { get; set; } = new List<BlogPost>();
 		public List<Comment>? Comments { get; set; } = new List<Comment>(); //: List of Comment he writes on Posts.
 
-		public List<Order>? orders { get; set; }=new List<Order>();
+		public List<Order>? orders { get; set; }= new List<Order>();
 		public Token Token { get; set; }
 	}
 }

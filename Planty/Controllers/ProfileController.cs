@@ -32,10 +32,10 @@ this.userManager = userManager;
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var user = await userManager.Users
-                .Include(u=>u.orders)
                 .Include(u => u.posts)
                 .ThenInclude(u => u.Comments)
                 .FirstOrDefaultAsync(u => u.Id == userId);
+
 
             if (user == null)
                 return NotFound();
@@ -45,7 +45,8 @@ this.userManager = userManager;
                 user.UserName,
                 user.Email,
                 user.ProfilePictureUrl,
-                Orders = user.orders.Select(o => new { o.OrderDate, o.TotalPrice }),
+               
+             
                 Posts = user.posts.Select(p => new
                 {
                     p.Content,

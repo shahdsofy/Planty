@@ -1,5 +1,6 @@
 ﻿
 using System.ComponentModel.DataAnnotations.Schema;
+using Blog_Platform.Models;
 using Planty.Models;
 using Planty.Models.Enums;
 
@@ -22,4 +23,6 @@ public class Order
 
 	// Navigation Properties
 	public ICollection<OrderItem> OrderItems { get; set; }
+
+	public AppUser AppUser { get; set; }
 }

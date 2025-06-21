@@ -19,6 +19,7 @@ using Planty.Repository;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.FileProviders;
 // Planty.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,7 +41,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(option =>
 	option.Password.RequireUppercase = false;
 	option.Password.RequireLowercase = false;
 	option.Password.RequireDigit = false;
-}).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders(); 
+}).AddEntityFrameworkStores<ApplicationDbContext>(); 
 
 builder.Services.AddAuthentication(options =>
 {
@@ -132,6 +133,25 @@ app.Lifetime.ApplicationStarted.Register(async () =>
 	app.UseStaticFiles();
 
 });
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "posts")),
+    RequestPath = "/posts"
+});
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images","plants")),
+    RequestPath = "/images/plants"
+});
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "profile_picture")),
+    RequestPath = "/profile_picture"
+});
 
 
 // Configure the HTTP request pipeline.
@@ -141,6 +161,7 @@ if (app.Environment.IsDevelopment())
 	app.UseSwaggerUI();
 }
 
+app.UseStaticFiles();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
